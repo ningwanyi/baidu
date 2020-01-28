@@ -142,7 +142,7 @@ def get_dataloader(root, batch_size):
          transforms.Normalize((0.1307,), (0.3081,))])
 
     train_set = datasets.MNIST(
-        root, train=True, transform=transform, download=False)
+        root, train=True, transform=transform, download=True)
     sampler = DistributedSampler(train_set)
 
     train_loader = data.DataLoader(
@@ -152,7 +152,7 @@ def get_dataloader(root, batch_size):
         sampler=sampler)
 
     test_loader = data.DataLoader(
-        datasets.MNIST(root, train=False, transform=transform, download=False),
+        datasets.MNIST(root, train=False, transform=transform, download=True),
         batch_size=batch_size,
         shuffle=False)
 
