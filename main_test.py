@@ -220,7 +220,6 @@ def main():
     args = parser.parse_args()
     print(args)
     train_set = datasets.MNIST(args.root, train=True, download=True)
-    exit(0)
 
     gpus = [int(g) for g in args.gpus.split(',')]
     mp.spawn(run, args=(args, gpus), nprocs=args.world_size)        # 分布式进程
