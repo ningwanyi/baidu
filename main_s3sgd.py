@@ -61,22 +61,30 @@ class Trainer(object):
         self.args = args
 
     def fit(self, epochs):
+        g_global = []
         for epoch in range(1, epochs + 1):
-            train_loss, train_acc = self.train()
+            train_loss, train_acc, up_percent, g_global = self.train(g_global)
             test_loss, test_acc = self.evaluate()
 
             print(
                 'Epoch: {}/{},'.format(epoch, epochs),
                 'train loss: {}, train acc: {},'.format(train_loss, train_acc),
-                'test loss: {}, test acc: {}.'.format(test_loss, test_acc))
+                'test loss: {}, test acc: {},'.format(test_loss, test_acc),
+                'up_percent: {}.'.format(up_percent))
 
-    def train(self):
+    def train(self,g_global):
         train_loss = Average()
         train_acc = Accuracy()
 
         self.net.train()
 
-        g_global = []
+        # g_global = []
+        if self.args.s3sgd:
+            up_number=0
+            total_number=0
+        else:
+            up_number=1
+            total_number=1
 
         for data, label in self.train_loader:
             data = data.cuda()
@@ -89,7 +97,8 @@ class Trainer(object):
             loss.backward()
 
             if self.args.s3sgd:
-                _, g_global = self.optimizer.step_s3sgd(g_global=g_global, args=self.args)
+                _, g_global, up_number, total_number = self.optimizer.step_s3sgd(g_global=g_global, args=self.args,
+                                                                                 Up_number=up_number,Total_number=total_number)
             else:
                 self.average_gradients()
                 self.optimizer.step()
@@ -97,7 +106,7 @@ class Trainer(object):
             train_loss.update(loss.item(), data.size(0))
             train_acc.update(output, label)
 
-        return train_loss, train_acc
+        return train_loss, train_acc, float(up_number)/float(total_number), g_global
 
     def evaluate(self):
         test_loss = Average()
